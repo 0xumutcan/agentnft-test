@@ -1,0 +1,48 @@
+{
+  "id": "0x0000000000000000000000000000000000000000000000000000000000000001",
+  "answer": "penguin",
+  "answer_variants": [
+    "penguin", "penguins", "penguen", "pinguino",
+    "emperor penguin", "penguin bird", "flightless seabird"
+  ],
+  "clues": [
+    {
+      "index": 0,
+      "type": "TEXT",
+      "channel": "onchain",
+      "data": "Güney yarımkürenin en zarif smokin sahibi, soğuğa meydan okuyan varlık."
+    },
+    {
+      "index": 1,
+      "type": "HINT",
+      "channel": "onchain",
+      "data": "Hayvanlar alemi. Denizde yüzer, karada yürür. Asla uçmaz."
+    },
+    {
+      "index": 2,
+      "type": "ELIMINATION",
+      "channel": "paid_x402",
+      "price_usd": 1,
+      "path": "/ipucu/puzzle_001/2",
+      "data": "Kutup ayısı değil. Fok değil. Mors değil. Orca değil."
+    },
+    {
+      "index": 3,
+      "type": "CONTEXT",
+      "channel": "paid_x402",
+      "price_usd": 1,
+      "path": "/ipucu/puzzle_001/3",
+      "data": "Emperor, Adelie, Chinstrap, Gentoo — bunlar bu varlığın alt türleri."
+    },
+    {
+      "index": 4,
+      "type": "CONTEXT",
+      "channel": "paid_x402",
+      "price_usd": 2,
+      "path": "/ipucu/puzzle_001/4",
+      "data": "Linux maskotu da bu ismi taşır. Tux diye bilinir."
+    }
+  ],
+  "model_threshold": 0.70,
+  "similarity_model": "all-MiniLM-L6-v2"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "x402-clue-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "x402-express": "^0.2.0",
+    "viem": "^2.17.0",
+    "dotenv": "^16.4.0"
+  }
+}

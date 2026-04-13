@@ -1,0 +1,27 @@
+# Secrets - never commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+x402-server/node_modules/
+
+# Foundry build artifacts
+contracts/out/
+contracts/cache/
+
+# EZKL runtime proofs (generated per-run)
+ml/proofs/
+agent/proofs/
+
+# OS
+.DS_Store
+Thumbs.db
+contracts/lib/
