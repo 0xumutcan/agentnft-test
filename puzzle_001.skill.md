@@ -111,51 +111,51 @@ This encodes your answer as a semantic embedding, runs it through a PCA projecti
 
 ## Step 3 — Mint
 
+The minter supports two modes. Use whichever matches your wallet setup.
+
+### Option A — Plain EOA wallet (standard private key)
+
+Set environment variable:
+```bash
+export PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+```
+
 ```python
-import os
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
-from eth_account import Account
+import os, sys
+sys.path.insert(0, "agent")
+from minter import Minter
 
-w3 = Web3(Web3.HTTPProvider("https://api.testnet.abs.xyz"))
-w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+minter  = Minter()
+tx_hash = minter.mint(
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    proof_bytes,    # from Step 2
+    public_inputs,  # from Step 2
+)
+print(f"https://sepolia.abscan.org/tx/{tx_hash}")
+```
 
-account = Account.from_key(os.environ["PRIVATE_KEY"])
+### Option B — Abstract Global Wallet (AGW session key)
 
-NFT_ABI = [
-    {"inputs": [
-        {"name": "puzzleId",  "type": "bytes32"},
-        {"name": "proof",     "type": "bytes"},
-        {"name": "instances", "type": "uint256[]"}
-    ], "name": "mintWithProof", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
-    {"inputs": [
-        {"name": "puzzleId", "type": "bytes32"},
-        {"name": "solver",   "type": "address"}
-    ], "name": "claimed", "outputs": [{"name": "", "type": "bool"}], "stateMutability": "view", "type": "function"}
-]
+AGW uses a **session key** which is a standard EOA private key registered in your AGW smart contract. Transactions are sent *from* the AGW smart wallet address but *signed by* the session key using ZKsync type-113 EIP-712 format.
 
-nft = w3.eth.contract(address="0x36B7a190E236625e185c707bcA192D053084143E", abi=NFT_ABI)
-puzzle_id_bytes = bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000001")
+```bash
+pip install zksync2
+export PRIVATE_KEY=0xYOUR_SESSION_KEY    # the registered session key private key
+export AGW_ADDRESS=0xYOUR_AGW_WALLET     # your Abstract Global Wallet address
+```
 
-if nft.functions.claimed(puzzle_id_bytes, account.address).call():
-    print("Already claimed.")
-else:
-    tx = nft.functions.mintWithProof(
-        puzzle_id_bytes, proof_bytes, public_inputs
-    ).build_transaction({
-        "from":    account.address,
-        "nonce":   w3.eth.get_transaction_count(account.address),
-        "gas":     900_000,
-        "chainId": 11124,
-    })
-    signed  = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+```python
+import os, sys
+sys.path.insert(0, "agent")
+from minter import Minter   # auto-detects AGW mode when AGW_ADDRESS is set
 
-    if receipt["status"] == 1:
-        print(f"NFT minted! https://sepolia.abscan.org/tx/{tx_hash.hex()}")
-    else:
-        print(f"TX reverted — wrong answer? Try a different word.")
+minter  = Minter()
+tx_hash = minter.mint(
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    proof_bytes,
+    public_inputs,
+)
+print(f"https://sepolia.abscan.org/tx/{tx_hash}")
 ```
 
 ---
@@ -168,3 +168,5 @@ else:
 | `gen_witness failed` | Check `ml/artifacts/` has all files; re-run `python ml/ezkl_pipeline.py` |
 | Not enough gas | Get testnet ETH from `https://faucet.abs.xyz` |
 | Already claimed | Your wallet already minted this puzzle |
+| `ImportError: zksync2` | AGW mode needs: `pip install zksync2` |
+| AGW tx rejected | Session key may not be registered in your AGW contract — register it first via the AGW JS SDK |
