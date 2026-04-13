@@ -57,7 +57,7 @@ def prove(puzzle_id_hex: str, answer: str) -> tuple[bytes, list[int]]:
     pca, scaler = bundle["pca"], bundle["scaler"]
     embedding_pca    = pca.transform(embedding_384).astype(np.float32)
     embedding_32     = scaler.transform(embedding_pca).astype(np.float32).flatten()
-    print(f"[Prover] PCA+scale: 384-dim → {embedding_32.shape[0]}-dim  "
+    print(f"[Prover] PCA+scale: 384-dim -> {embedding_32.shape[0]}-dim  "
           f"range=[{embedding_32.min():.2f}, {embedding_32.max():.2f}]")
 
     # Step 3: EZKL proof (32-dim → MLP → score > 0.7)

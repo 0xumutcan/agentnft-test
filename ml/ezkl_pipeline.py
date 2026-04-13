@@ -191,7 +191,7 @@ def generate_proof(
             r = await r
         assert r, "gen_witness failed"
 
-        # Prove
+        # Prove — SRS loaded from ~/.ezkl/srs/ (copy it there if missing)
         r = ezkl.prove(witness_path, compiled_path, pk_path, proof_path, "single")
         if inspect.iscoroutine(r):
             r = await r
@@ -205,12 +205,23 @@ def generate_proof(
 
     proof_bytes = bytes.fromhex(proof_data["proof"].replace("0x", ""))
 
-    # Flatten instances to uint256 list (EZKL field elements)
+    # Flatten instances to uint256 list.
+    # EZKL 9.x stores field elements as 64-char hex strings in little-endian byte order.
+    # We must reverse the bytes before interpreting as a uint256, otherwise the value
+    # exceeds the BN254 prime and the on-chain verifier rejects it.
     instances_flat = []
     for instance_row in proof_data["instances"]:
         for val in instance_row:
-            # val is a hex string field element
-            instances_flat.append(int(val, 16) if val.startswith("0x") else int(float(val)))
+            if isinstance(val, str):
+                hex_str = val[2:] if val.startswith("0x") else val
+                if len(hex_str) == 64:
+                    # 32-byte little-endian field element → big-endian uint256
+                    val_int = int.from_bytes(bytes.fromhex(hex_str), byteorder='little')
+                else:
+                    val_int = int(hex_str, 16)
+            else:
+                val_int = int(val)
+            instances_flat.append(val_int)
 
     return proof_bytes, instances_flat
 
