@@ -98,7 +98,7 @@ class Minter:
         ).build_transaction({
             "from":    self.sender,
             "nonce":   self.w3.eth.get_transaction_count(self.sender),
-            "gas":     900_000,
+            "gas":     6_000_000,
             "chainId": CHAIN_ID,
         })
         signed  = self.signer_key.sign_transaction(tx)
@@ -141,7 +141,7 @@ class Minter:
             from_=self.sender,
             to=Web3.to_checksum_address(NFT_CONTRACT_ADDR),
             data=calldata,
-            gas_limit=900_000,
+            gas_limit=6_000_000,
             gas_price=gas_price,
             max_priority_fee_per_gas=gas_price,
         )
