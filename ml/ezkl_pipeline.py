@@ -203,7 +203,13 @@ def generate_proof(
     with open(proof_path) as f:
         proof_data = json.load(f)
 
-    proof_bytes = bytes.fromhex(proof_data["proof"].replace("0x", ""))
+    # EZKL versions differ: some put hex string in "proof", others in "hex_proof"
+    # with "proof" being a list of byte ints. Handle both formats.
+    raw_proof = proof_data.get("hex_proof") or proof_data["proof"]
+    if isinstance(raw_proof, str):
+        proof_bytes = bytes.fromhex(raw_proof.replace("0x", ""))
+    else:
+        proof_bytes = bytes(raw_proof)
 
     # Flatten instances to uint256 list.
     # EZKL 9.x stores field elements as 64-char hex strings in little-endian byte order.
