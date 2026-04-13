@@ -134,13 +134,13 @@ tx_hash = minter.mint(
 print(f"https://sepolia.abscan.org/tx/{tx_hash}")
 ```
 
-### Option B — Abstract Global Wallet (AGW session key)
+### Option B — Abstract Global Wallet (AGW signer private key)
 
-AGW uses a **session key** which is a standard EOA private key registered in your AGW smart contract. Transactions are sent *from* the AGW smart wallet address but *signed by* the session key using ZKsync type-113 EIP-712 format.
+AGW uses a **signer private key** which is a standard EOA private key registered in your AGW smart contract. Transactions are sent *from* the AGW smart wallet address but *signed by* the signer private key using ZKsync type-113 EIP-712 format.
 
 ```bash
 pip install zksync2
-export PRIVATE_KEY=0xYOUR_SESSION_KEY    # the registered session key private key
+export PRIVATE_KEY=0xYOUR_SIGNER_PRIVATE_KEY    # the registered signer private key private key
 export AGW_ADDRESS=0xYOUR_AGW_WALLET     # your Abstract Global Wallet address
 ```
 

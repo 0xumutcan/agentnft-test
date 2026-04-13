@@ -3,10 +3,10 @@ minter.py — Sends mintWithProof() transaction to ZkMLNFT on Abstract L2.
 
 Supports two signing modes:
   1. EOA mode  : standard private key, web3.py (default)
-  2. AGW mode  : Abstract Global Wallet session key, ZKsync type-113 tx
+  2. AGW mode  : Abstract Global Wallet signer private key, ZKsync type-113 tx
 
 Set env vars:
-  PRIVATE_KEY      = 0x...   (session key or plain EOA key)
+  PRIVATE_KEY      = 0x...   (signer private key or plain EOA key)
   AGW_ADDRESS      = 0x...   (only for AGW mode — the smart wallet address)
 
 If AGW_ADDRESS is set, AGW mode is used automatically.
@@ -60,18 +60,18 @@ class Minter:
     def __init__(self):
         self.w3          = Web3(Web3.HTTPProvider(ABSTRACT_RPC))
         self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-        self.session_key = Account.from_key(PRIVATE_KEY)
+        self.signer_key = Account.from_key(PRIVATE_KEY)
         self.agw_address = os.environ.get("AGW_ADDRESS")   # optional
         # sender = AGW smart wallet (if set) else plain EOA
         self.sender      = Web3.to_checksum_address(self.agw_address) \
-                           if self.agw_address else self.session_key.address
+                           if self.agw_address else self.signer_key.address
         self.nft         = self.w3.eth.contract(
             address=Web3.to_checksum_address(NFT_CONTRACT_ADDR),
             abi=NFT_ABI,
         )
         if self.agw_address:
             print(f"[Minter] AGW mode  — wallet: {self.sender}")
-            print(f"[Minter]             session: {self.session_key.address}")
+            print(f"[Minter]             signer: {self.signer_key.address}")
         else:
             print(f"[Minter] EOA mode  — address: {self.sender}")
 
@@ -101,15 +101,15 @@ class Minter:
             "gas":     900_000,
             "chainId": CHAIN_ID,
         })
-        signed  = self.session_key.sign_transaction(tx)
+        signed  = self.signer_key.sign_transaction(tx)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         return self._wait(tx_hash)
 
-    # ── AGW path (session key, ZKsync type-113 EIP-712 tx) ───────────────────
+    # ── AGW path (signer private key, ZKsync type-113 EIP-712 tx) ───────────────────
 
     def _mint_agw(self, puzzle_id_bytes, proof_bytes, public_inputs):
         """
-        Constructs a ZKsync EIP-712 type-113 transaction signed by the session key,
+        Constructs a ZKsync EIP-712 type-113 transaction signed by the signer private key,
         sent FROM the AGW smart wallet address.
 
         Requires: pip install zksync2
@@ -125,7 +125,7 @@ class Minter:
             )
 
         zk = ZkSyncBuilder.build(ABSTRACT_RPC)
-        signer = PrivateKeyEthSigner(self.session_key, CHAIN_ID)
+        signer = PrivateKeyEthSigner(self.signer_key, CHAIN_ID)
 
         calldata = self.nft.encodeABI(
             fn_name="mintWithProof",
