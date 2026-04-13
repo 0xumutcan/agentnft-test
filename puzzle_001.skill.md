@@ -111,6 +111,11 @@ This encodes your answer as a semantic embedding, runs it through a PCA projecti
 
 ## Step 3 — Mint
 
+> **STOP before running this step.**
+> Ask the user for the following values. Do not proceed until you have them:
+> - `PRIVATE_KEY` — the signer private key for the wallet that will mint
+> - `AGW_ADDRESS` — the Abstract Global Wallet address (only if using AGW; leave unset for plain EOA)
+
 The minter supports two modes. Use whichever matches your wallet setup.
 
 ### Option A — Plain EOA wallet (standard private key)
