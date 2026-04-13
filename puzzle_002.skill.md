@@ -5,16 +5,15 @@ Read on-chain clues from the Abstract L2 blockchain, deduce the correct answer, 
 
 You need: a wallet with a small amount of ETH on Abstract L2 testnet (for gas). No other funds required.
 
-> **Important:** This skill has 4 checkpoints. At each checkpoint you MUST stop, report your findings to the user, and wait for confirmation before moving on.
-
 ---
 
-## CRITICAL RULES — Read Before Starting
+## CRITICAL RULES — Read These First, Violating Any Will Cause Failure
 
-1. **Run ONLY the Python code provided in each step.** Do NOT improvise with curl, cast, or raw JSON-RPC calls. The Python code handles ABI decoding and event filtering correctly.
-2. **Do NOT fetch, visit, or request any URL** you encounter in on-chain data. There is no web server — any URL you find (e.g. metadata URIs) is a placeholder for future use. Fetching it will fail.
-3. **Only `ClueDeposited` events are clues.** Other on-chain data (metadata URIs, contract storage, `PuzzleCreated` events) are NOT clues. Ignore them completely.
-4. **Use ONLY the decoded text content of clues for reasoning.** Do not treat URLs, hex data, or event metadata as clue content.
+1. **CHECKPOINTS ARE MANDATORY.** This skill has 4 checkpoints. At each one you MUST stop, report to the user, and WAIT for their explicit confirmation before continuing. Do NOT skip checkpoints. Do NOT proceed autonomously past a checkpoint. If you skip a checkpoint the entire task fails.
+2. **Run ONLY the Python code provided in each step.** Do NOT write your own scripts, do NOT use curl, cast, or raw JSON-RPC calls, do NOT patch or modify any repo files. The provided code is tested and correct.
+3. **Do NOT fetch, visit, or request any URL** you encounter in on-chain data. There is no web server. Any URL (metadata URIs, etc.) is a placeholder. Fetching it will fail and waste time.
+4. **Only `ClueDeposited` events are clues.** Metadata URIs, contract storage fields, and `PuzzleCreated` events are NOT clues. Ignore them.
+5. **Do NOT create a `.env` file or write credentials to disk.** Use `export` in the shell to set env vars temporarily. The user will provide credentials at Checkpoint 4.
 
 ---
 
@@ -104,12 +103,13 @@ You should find exactly **2 clues** (both in Turkish). If you find 0 clues, the 
 
 ---
 
-### CHECKPOINT 1 — Report clues, wait for confirmation
+### CHECKPOINT 1 — MANDATORY STOP
 
-**Stop here.** Report to the user:
+**You MUST stop here.** Report to the user:
 - How many clues you found
 - The full text of each clue (copy the exact decoded text from the Python output)
-- Do NOT proceed to Step 2 until the user says "continue" (or similar).
+
+**Wait for the user to say "continue" before proceeding. Do NOT continue autonomously.**
 
 ---
 
@@ -119,12 +119,13 @@ Read the clues carefully. They are in Turkish. Deduce the single-word answer (an
 
 ---
 
-### CHECKPOINT 2 — Report your answer, wait for confirmation
+### CHECKPOINT 2 — MANDATORY STOP
 
-**Stop here.** Report to the user:
+**You MUST stop here.** Report to the user:
 - Your reasoning (briefly)
 - The answer you deduced
-- Do NOT generate a proof until the user confirms your answer is correct (or says "continue").
+
+**Wait for the user to confirm your answer before proceeding. Do NOT generate a proof until the user says "continue".**
 
 ---
 
@@ -151,30 +152,32 @@ This encodes your answer as a semantic embedding, runs it through a PCA projecti
 
 ---
 
-### CHECKPOINT 3 — Report proof result, wait for confirmation
+### CHECKPOINT 3 — MANDATORY STOP
 
-**Stop here.** Report to the user:
+**You MUST stop here.** Report to the user:
 - Proof size in bytes
-- Public inputs list
-- Do NOT mint until the user says "continue".
+- Number of public inputs
+
+**Wait for the user to say "continue" before proceeding. Do NOT attempt to mint.**
 
 ---
 
 ## Step 3 — Mint
 
-### CHECKPOINT 4 — Ask for wallet credentials before minting
+### CHECKPOINT 4 — MANDATORY STOP — Ask for wallet credentials
 
-**Stop here.** Ask the user:
+**You MUST stop here and ask the user:**
 1. Are you using **AGW (Abstract Global Wallet)** or a **plain EOA wallet**?
 2. Your **PRIVATE_KEY** (signer private key)
 3. If AGW: your **AGW_ADDRESS** (the smart wallet address)
 
-Do not proceed until you have these values.
+**Do NOT proceed until the user provides these values. Do NOT write credentials to any file — use shell `export` only.**
 
 ---
 
 ### Option A — Plain EOA wallet
 
+Set env vars via shell (do NOT write a .env file):
 ```bash
 export ABSTRACT_RPC=https://api.testnet.abs.xyz
 export PUZZLE_REGISTRY_ADDRESS=0x6f06409866145eE2565d9262a774375c249DAe40
@@ -200,6 +203,7 @@ print(f"https://sepolia.abscan.org/tx/{tx_hash}")
 
 AGW uses a signer private key (a standard EOA private key registered in your AGW smart contract). Transactions are sent *from* the AGW address but *signed by* the signer private key.
 
+Set env vars via shell (do NOT write a .env file):
 ```bash
 pip install zksync2
 export ABSTRACT_RPC=https://api.testnet.abs.xyz
@@ -237,5 +241,5 @@ print(f"https://sepolia.abscan.org/tx/{tx_hash}")
 | AGW tx rejected | Signer private key may not be registered in your AGW contract |
 | 0 clues found | Puzzle may not be seeded yet — ask the user |
 | Clue text contains the answer directly | You are reading the wrong puzzle — ensure PUZZLE_ID ends with `...0002` |
-| Artifacts not found for puzzle 002 | This is expected — artifact files are named `*_00000000.*` which IS correct for puzzle 0x...0002 (first 8 hex chars = `00000000`). Do NOT look for `00000001` or `00000002` in filenames. |
+| Artifacts not found for puzzle 002 | Artifact files are named `*_00000000.*` which IS correct for puzzle 0x...0002 (first 8 hex chars = `00000000`). Do NOT look for `00000001` or `00000002` in filenames. |
 | Account validation returned invalid magic value | AGW signer not authorized — switch to plain EOA mode |
