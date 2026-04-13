@@ -98,7 +98,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="zkML puzzle-solving agent")
     parser.add_argument(
         "--puzzle",
-        default="0x0000000000000000000000000000000000000000000000000000000000000001",
+        default="0x0000000000000000000000000000000000000000000000000000000000000002",
         help="Puzzle ID (bytes32 hex)",
     )
     parser.add_argument(

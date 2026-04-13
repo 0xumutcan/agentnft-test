@@ -30,9 +30,9 @@ app.get("/puzzles", (_, res) => {
         id: "001",
         onchain_clues: 2,
         paid_clues: [
-          { path: "/ipucu/puzzle_001/2", price_usd: 1 },
-          { path: "/ipucu/puzzle_001/3", price_usd: 1 },
-          { path: "/ipucu/puzzle_001/4", price_usd: 2 },
+          { path: "/ipucu/puzzle_002/2", price_usd: 1 },
+          { path: "/ipucu/puzzle_002/3", price_usd: 1 },
+          { path: "/ipucu/puzzle_002/4", price_usd: 2 },
         ],
       },
     ],
@@ -42,7 +42,7 @@ app.get("/puzzles", (_, res) => {
 // ── x402 paid clue endpoints ──────────────────────────────────────────────────
 //
 // Flow:
-//   1. Agent GET /ipucu/puzzle_001/2
+//   1. Agent GET /ipucu/puzzle_002/2
 //   2. Server returns 402 with payment requirements
 //   3. Agent pays 1 USDC → retries with X-PAYMENT header
 //   4. Middleware verifies payment → handler runs → clue returned
@@ -77,21 +77,21 @@ function clueHandler(puzzleId, clueIndex) {
 
 // Clue 2 — $1
 app.get(
-  "/ipucu/puzzle_001/2",
+  "/ipucu/puzzle_002/2",
   paymentMiddleware(account.address, "$1", { network: Network.BaseSepolia }),
   clueHandler("001", 2)
 );
 
 // Clue 3 — $1
 app.get(
-  "/ipucu/puzzle_001/3",
+  "/ipucu/puzzle_002/3",
   paymentMiddleware(account.address, "$1", { network: Network.BaseSepolia }),
   clueHandler("001", 3)
 );
 
 // Clue 4 — $2 (strongest hint)
 app.get(
-  "/ipucu/puzzle_001/4",
+  "/ipucu/puzzle_002/4",
   paymentMiddleware(account.address, "$2", { network: Network.BaseSepolia }),
   clueHandler("001", 4)
 );

@@ -4,7 +4,7 @@ prover.py — Computes embedding, applies PCA, generates EZKL zkML proof.
 Pipeline (all off-circuit except the last step):
   answer text
     → sentence-transformers  →  384-dim embedding  (off-circuit)
-    → PCA (puzzle-specific)  →   32-dim projection  (off-circuit)
+    → PCA (puzzle-specific)  →   8-dim projection   (off-circuit)
     → EZKL MLP proof         →  correctness proof   (ZK circuit)
 """
 
@@ -37,13 +37,15 @@ def _get_pca_bundle(puzzle_id_short: str, artifacts_dir: str):
     return _pca_cache[puzzle_id_short]
 
 
-def prove(puzzle_id_hex: str, answer: str) -> tuple[bytes, list[int]]:
+def prove(puzzle_id_hex: str, answer: str, artifacts_dir: str = None) -> tuple[bytes, list[int]]:
     """
     Full prove pipeline:
-      answer → 384-dim embed → PCA (32-dim) → EZKL proof
+      answer → 384-dim embed → PCA (8-dim) → EZKL proof
     Returns (proof_bytes, public_inputs_uint256_list).
     """
-    from config import ML_ARTIFACTS_DIR
+    if artifacts_dir is None:
+        from config import ML_ARTIFACTS_DIR
+        artifacts_dir = ML_ARTIFACTS_DIR
     puzzle_id_short = puzzle_id_hex.replace("0x", "")[:8]
 
     # Step 1: sentence embedding (384-dim, off-circuit)
@@ -53,7 +55,7 @@ def prove(puzzle_id_hex: str, answer: str) -> tuple[bytes, list[int]]:
     ).astype(np.float32).reshape(1, -1)
 
     # Step 2: PCA + standardize (384 → 32, off-circuit)
-    bundle = _get_pca_bundle(puzzle_id_short, ML_ARTIFACTS_DIR)
+    bundle = _get_pca_bundle(puzzle_id_short, artifacts_dir)
     pca, scaler = bundle["pca"], bundle["scaler"]
     embedding_pca    = pca.transform(embedding_384).astype(np.float32)
     embedding_32     = scaler.transform(embedding_pca).astype(np.float32).flatten()
@@ -65,7 +67,7 @@ def prove(puzzle_id_hex: str, answer: str) -> tuple[bytes, list[int]]:
     proof_bytes, public_inputs = generate_proof(
         puzzle_id_short=puzzle_id_short,
         embedding=embedding_32,
-        output_dir=ML_ARTIFACTS_DIR,
+        output_dir=artifacts_dir,
     )
 
     print(f"[Prover] Done. Proof size: {len(proof_bytes):,} bytes")

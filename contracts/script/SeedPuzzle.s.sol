@@ -31,6 +31,8 @@ contract SeedPuzzle is Script {
         console.log("Puzzle created");
 
         // Free on-chain clues (agents discover via eth_getLogs)
+        // IMPORTANT: Clues must NOT contain the answer — they should guide
+        // the agent toward it through description, hints, and elimination.
         uint8[] memory types = new uint8[](2);
         types[0] = registry.TYPE_TEXT();
         types[1] = registry.TYPE_HINT();
@@ -40,24 +42,25 @@ contract SeedPuzzle is Script {
             "Guney yarimkurenin en zarif smokin sahibi, soguga meydan okuyan varlik."
         );
         data[1] = abi.encode(
-            "Hayvanlar alemi. Denizde yuzer, karada yuruyr. Asla ucmaz."
+            "Hayvanlar alemi. Denizde yuzer, karada yurur. Asla ucmaz."
         );
 
         registry.depositClues(PUZZLE_001, types, data);
         console.log("2 free clues deposited");
 
         // TYPE_POINTER clue → directs agent to x402 server for paid clues
-        registry.depositClue(
-            PUZZLE_001,
-            4, // TYPE_POINTER
-            abi.encode(
-                "x402",                                // protocol
-                "https://agentoyunu.com/ipucu/puzzle_001", // base URL
-                uint256(3),                            // number of paid clues
-                uint256(1e6)                           // price per clue (1 USDC, 6 decimals)
-            )
-        );
-        console.log("x402 pointer clue deposited");
+        // NOTE: Uncomment when x402 server is deployed and active.
+        // registry.depositClue(
+        //     PUZZLE_001,
+        //     4, // TYPE_POINTER
+        //     abi.encode(
+        //         "x402",                                // protocol
+        //         "https://agentoyunu.com/ipucu/puzzle_001", // base URL
+        //         uint256(3),                            // number of paid clues
+        //         uint256(1e6)                           // price per clue (1 USDC, 6 decimals)
+        //     )
+        // );
+        // console.log("x402 pointer clue deposited");
 
         vm.stopBroadcast();
     }

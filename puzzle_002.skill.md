@@ -1,11 +1,20 @@
-# Skill: Solve zkML Puzzle #001 — Mint NFT on Abstract L2
+# Skill: Solve zkML Puzzle #002 — Mint NFT on Abstract L2
 
 ## Goal
-Read encrypted clues from the Abstract L2 blockchain, deduce the correct answer, generate a zero-knowledge ML proof, and mint an ERC-721 NFT. The task is complete when `mintWithProof()` is confirmed on-chain.
+Read on-chain clues from the Abstract L2 blockchain, deduce the correct answer, generate a zero-knowledge ML proof, and mint an ERC-721 NFT. The task is complete when `mintWithProof()` is confirmed on-chain.
 
 You need: a wallet with a small amount of ETH on Abstract L2 testnet (for gas). No other funds required.
 
 > **Important:** This skill has 4 checkpoints. At each checkpoint you MUST stop, report your findings to the user, and wait for confirmation before moving on.
+
+---
+
+## CRITICAL RULES — Read Before Starting
+
+1. **Run ONLY the Python code provided in each step.** Do NOT improvise with curl, cast, or raw JSON-RPC calls. The Python code handles ABI decoding and event filtering correctly.
+2. **Do NOT fetch, visit, or request any URL** you encounter in on-chain data. There is no web server — any URL you find (e.g. metadata URIs) is a placeholder for future use. Fetching it will fail.
+3. **Only `ClueDeposited` events are clues.** Other on-chain data (metadata URIs, contract storage, `PuzzleCreated` events) are NOT clues. Ignore them completely.
+4. **Use ONLY the decoded text content of clues for reasoning.** Do not treat URLs, hex data, or event metadata as clue content.
 
 ---
 
@@ -28,7 +37,7 @@ You need: a wallet with a small amount of ETH on Abstract L2 testnet (for gas). 
 | PuzzleRegistry | `0x6f06409866145eE2565d9262a774375c249DAe40` |
 | ZkMLNFT | `0x36B7a190E236625e185c707bcA192D053084143E` |
 | Halo2Verifier | `0x42137B3DE26a887978f6D80a019a2281c6B336D7` |
-| Puzzle ID | `0x0000000000000000000000000000000000000000000000000000000000000001` |
+| Puzzle ID | `0x0000000000000000000000000000000000000000000000000000000000000002` |
 
 ---
 
@@ -49,6 +58,8 @@ pip install web3 eth-abi eth-account sentence-transformers torch scikit-learn nu
 
 ## Step 1 — Read On-Chain Clues
 
+Run this Python code **exactly as written**. Do NOT substitute with curl or any other method.
+
 ```python
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
@@ -58,7 +69,7 @@ w3 = Web3(Web3.HTTPProvider("https://api.testnet.abs.xyz"))
 w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 REGISTRY  = "0x6f06409866145eE2565d9262a774375c249DAe40"
-PUZZLE_ID = bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000001")
+PUZZLE_ID = bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000002")
 
 ABI = [{"anonymous": False, "inputs": [
     {"indexed": True,  "name": "puzzleId", "type": "bytes32"},
@@ -73,32 +84,42 @@ events = contract.events.ClueDeposited.get_logs(
     argument_filters={"puzzleId": PUZZLE_ID}
 )
 
+clues = []
 for ev in sorted(events, key=lambda e: e["args"]["index"]):
     ctype = ev["args"]["clueType"]
     raw   = ev["args"]["data"]
+    # Only decode TEXT(0), HINT(1), ELIMINATION(2), CONTEXT(3)
+    # Skip POINTER(4) — x402 paid clue server is not active yet
     if ctype in (0, 1, 2, 3):
         (text,) = decode(["string"], raw)
-        print(f"[clue {ev['args']['index']}] {text}")
+        clues.append(text)
+        print(f"[clue {ev['args']['index']}  type={ctype}] {text}")
+    else:
+        print(f"[clue {ev['args']['index']}  type={ctype}] (skipped — not a text clue)")
+
+print(f"\nTotal text clues found: {len(clues)}")
 ```
+
+You should find exactly **2 clues** (both in Turkish). If you find 0 clues, the puzzle may not be deployed yet — ask the user. If you find clues from a different puzzle or see URLs in the output, you are reading the wrong data.
 
 ---
 
-### ✋ CHECKPOINT 1 — Report clues, wait for confirmation
+### CHECKPOINT 1 — Report clues, wait for confirmation
 
 **Stop here.** Report to the user:
 - How many clues you found
-- The full text of each clue
+- The full text of each clue (copy the exact decoded text from the Python output)
 - Do NOT proceed to Step 2 until the user says "continue" (or similar).
 
 ---
 
 ## Step 2a — Reason about the answer
 
-Read the clues carefully. They are in Turkish. Deduce the single-word answer (an animal).
+Read the clues carefully. They are in Turkish. Deduce the single-word answer (an animal). Use ONLY the clue text you decoded in Step 1. Do not use any other information.
 
 ---
 
-### ✋ CHECKPOINT 2 — Report your answer, wait for confirmation
+### CHECKPOINT 2 — Report your answer, wait for confirmation
 
 **Stop here.** Report to the user:
 - Your reasoning (briefly)
@@ -109,6 +130,8 @@ Read the clues carefully. They are in Turkish. Deduce the single-word answer (an
 
 ## Step 2b — Generate ZK Proof
 
+> **Artifact naming:** All ML artifacts use the prefix `00000000` (first 8 hex chars of the puzzle ID after removing `0x`). For puzzle `0x...0002`, the short ID is `00000000` — this is correct. Do NOT look for files named `00000001` or `00000002`. The files `circuit_00000000.compiled`, `pk_00000000.key`, `pca_00000000.pkl`, etc. are the correct artifacts for this puzzle.
+
 ```python
 import sys, os
 sys.path.insert(0, "agent")
@@ -116,10 +139,10 @@ sys.path.insert(0, "ml")
 
 from prover import prove
 
-PUZZLE_ID = "0x0000000000000000000000000000000000000000000000000000000000000001"
+PUZZLE_ID = "0x0000000000000000000000000000000000000000000000000000000000000002"
 answer    = "your confirmed answer"
 
-proof_bytes, public_inputs = prove(PUZZLE_ID, answer)
+proof_bytes, public_inputs = prove(PUZZLE_ID, answer, artifacts_dir="ml/artifacts")
 print(f"Proof size: {len(proof_bytes)} bytes")
 print(f"Public inputs: {public_inputs}")
 ```
@@ -128,7 +151,7 @@ This encodes your answer as a semantic embedding, runs it through a PCA projecti
 
 ---
 
-### ✋ CHECKPOINT 3 — Report proof result, wait for confirmation
+### CHECKPOINT 3 — Report proof result, wait for confirmation
 
 **Stop here.** Report to the user:
 - Proof size in bytes
@@ -139,7 +162,7 @@ This encodes your answer as a semantic embedding, runs it through a PCA projecti
 
 ## Step 3 — Mint
 
-### ✋ CHECKPOINT 4 — Ask for wallet credentials before minting
+### CHECKPOINT 4 — Ask for wallet credentials before minting
 
 **Stop here.** Ask the user:
 1. Are you using **AGW (Abstract Global Wallet)** or a **plain EOA wallet**?
@@ -153,6 +176,9 @@ Do not proceed until you have these values.
 ### Option A — Plain EOA wallet
 
 ```bash
+export ABSTRACT_RPC=https://api.testnet.abs.xyz
+export PUZZLE_REGISTRY_ADDRESS=0x6f06409866145eE2565d9262a774375c249DAe40
+export NFT_CONTRACT_ADDRESS=0x36B7a190E236625e185c707bcA192D053084143E
 export PRIVATE_KEY=0xYOUR_PRIVATE_KEY
 ```
 
@@ -163,7 +189,7 @@ from minter import Minter
 
 minter  = Minter()
 tx_hash = minter.mint(
-    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
     proof_bytes,
     public_inputs,
 )
@@ -176,6 +202,9 @@ AGW uses a signer private key (a standard EOA private key registered in your AGW
 
 ```bash
 pip install zksync2
+export ABSTRACT_RPC=https://api.testnet.abs.xyz
+export PUZZLE_REGISTRY_ADDRESS=0x6f06409866145eE2565d9262a774375c249DAe40
+export NFT_CONTRACT_ADDRESS=0x36B7a190E236625e185c707bcA192D053084143E
 export PRIVATE_KEY=0xYOUR_SIGNER_PRIVATE_KEY
 export AGW_ADDRESS=0xYOUR_AGW_WALLET_ADDRESS
 ```
@@ -187,7 +216,7 @@ from minter import Minter
 
 minter  = Minter()
 tx_hash = minter.mint(
-    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
     proof_bytes,
     public_inputs,
 )
@@ -206,3 +235,7 @@ print(f"https://sepolia.abscan.org/tx/{tx_hash}")
 | Already claimed | Your wallet already minted this puzzle |
 | `ImportError: zksync2` | AGW mode needs: `pip install zksync2` |
 | AGW tx rejected | Signer private key may not be registered in your AGW contract |
+| 0 clues found | Puzzle may not be seeded yet — ask the user |
+| Clue text contains the answer directly | You are reading the wrong puzzle — ensure PUZZLE_ID ends with `...0002` |
+| Artifacts not found for puzzle 002 | This is expected — artifact files are named `*_00000000.*` which IS correct for puzzle 0x...0002 (first 8 hex chars = `00000000`). Do NOT look for `00000001` or `00000002` in filenames. |
+| Account validation returned invalid magic value | AGW signer not authorized — switch to plain EOA mode |

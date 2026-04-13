@@ -12,7 +12,7 @@ Artifacts saved:
   ml/artifacts/model_{puzzle_id}.pt  — MLP weights (circuit input)
 
 Usage:
-    python ml/train.py --puzzle puzzles/puzzle_001.json
+    python ml/train.py --puzzle puzzles/puzzle_002.json
 """
 
 import argparse
@@ -180,7 +180,7 @@ def train(puzzle_path: str, output_dir: str = "ml/artifacts") -> str:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--puzzle", default="puzzles/puzzle_001.json")
+    parser.add_argument("--puzzle", default="puzzles/puzzle_002.json")
     parser.add_argument("--output-dir", default="ml/artifacts")
     args = parser.parse_args()
     train(args.puzzle, args.output_dir)

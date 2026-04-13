@@ -10,7 +10,7 @@ Steps:
   6. Export Solidity verifier
 
 Usage:
-    python ml/ezkl_pipeline.py --puzzle puzzles/puzzle_001.json
+    python ml/ezkl_pipeline.py --puzzle puzzles/puzzle_002.json
 """
 
 import argparse
@@ -191,8 +191,8 @@ def generate_proof(
             r = await r
         assert r, "gen_witness failed"
 
-        # Prove — SRS loaded from ~/.ezkl/srs/ (copy it there if missing)
-        r = ezkl.prove(witness_path, compiled_path, pk_path, proof_path, "single")
+        # Prove
+        r = ezkl.prove(witness_path, compiled_path, pk_path, proof_path, "single", srs_path=srs_path)
         if inspect.iscoroutine(r):
             r = await r
         assert r, "prove failed"
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     import asyncio
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--puzzle", default="puzzles/puzzle_001.json")
+    parser.add_argument("--puzzle", default="puzzles/puzzle_002.json")
     parser.add_argument("--output-dir", default="ml/artifacts")
     args = parser.parse_args()
 

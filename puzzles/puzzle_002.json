@@ -1,5 +1,5 @@
 {
-  "id": "0x0000000000000000000000000000000000000000000000000000000000000001",
+  "id": "0x0000000000000000000000000000000000000000000000000000000000000002",
   "answer": "penguin",
   "answer_variants": [
     "penguin", "penguins", "penguen", "pinguino",
@@ -23,7 +23,7 @@
       "type": "ELIMINATION",
       "channel": "paid_x402",
       "price_usd": 1,
-      "path": "/ipucu/puzzle_001/2",
+      "path": "/ipucu/puzzle_002/2",
       "data": "Kutup ayısı değil. Fok değil. Mors değil. Orca değil."
     },
     {
@@ -31,7 +31,7 @@
       "type": "CONTEXT",
       "channel": "paid_x402",
       "price_usd": 1,
-      "path": "/ipucu/puzzle_001/3",
+      "path": "/ipucu/puzzle_002/3",
       "data": "Emperor, Adelie, Chinstrap, Gentoo — bunlar bu varlığın alt türleri."
     },
     {
@@ -39,7 +39,7 @@
       "type": "CONTEXT",
       "channel": "paid_x402",
       "price_usd": 2,
-      "path": "/ipucu/puzzle_001/4",
+      "path": "/ipucu/puzzle_002/4",
       "data": "Linux maskotu da bu ismi taşır. Tux diye bilinir."
     }
   ],

@@ -3,7 +3,7 @@ Puzzle answer validator MLP.
 
 Pipeline:
   sentence-transformers  →  384-dim embedding  (off-circuit, agent side)
-  PCA (sklearn)          →  32-dim projection  (off-circuit, agent side)
+  PCA (sklearn)          →  8-dim projection   (off-circuit, agent side)
   AnswerValidator MLP    →  scalar [0,1]        (ZK circuit — EZKL proves this)
 
 Reducing input from 384 → 32 dims drops proving key from ~500MB to ~8MB.
