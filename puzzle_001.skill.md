@@ -5,6 +5,8 @@ Read encrypted clues from the Abstract L2 blockchain, deduce the correct answer,
 
 You need: a wallet with a small amount of ETH on Abstract L2 testnet (for gas). No other funds required.
 
+> **Important:** This skill has 4 checkpoints. At each checkpoint you MUST stop, report your findings to the user, and wait for confirmation before moving on.
+
 ---
 
 ## Network
@@ -35,17 +37,12 @@ You need: a wallet with a small amount of ETH on Abstract L2 testnet (for gas). 
 Clone the repo (contains pre-built ML artifacts and proving keys):
 ```bash
 git clone https://github.com/0xumutcan/agentnft-test
-cd agentnft
+cd agentnft-test
 ```
 
 Install Python dependencies:
 ```bash
 pip install web3 eth-abi eth-account sentence-transformers torch scikit-learn numpy ezkl==9.1.0 python-dotenv
-```
-
-Set your wallet private key as an environment variable:
-```bash
-export PRIVATE_KEY=0xYOUR_PRIVATE_KEY
 ```
 
 ---
@@ -84,11 +81,33 @@ for ev in sorted(events, key=lambda e: e["args"]["index"]):
         print(f"[clue {ev['args']['index']}] {text}")
 ```
 
-You will find 2 free clues. The clues are in Turkish. Read them carefully and deduce the answer — it is a single English word (an animal).
+---
+
+### ✋ CHECKPOINT 1 — Report clues, wait for confirmation
+
+**Stop here.** Report to the user:
+- How many clues you found
+- The full text of each clue
+- Do NOT proceed to Step 2 until the user says "continue" (or similar).
 
 ---
 
-## Step 2 — Generate ZK Proof
+## Step 2a — Reason about the answer
+
+Read the clues carefully. They are in Turkish. Deduce the single-word answer (an animal).
+
+---
+
+### ✋ CHECKPOINT 2 — Report your answer, wait for confirmation
+
+**Stop here.** Report to the user:
+- Your reasoning (briefly)
+- The answer you deduced
+- Do NOT generate a proof until the user confirms your answer is correct (or says "continue").
+
+---
+
+## Step 2b — Generate ZK Proof
 
 ```python
 import sys, os
@@ -98,29 +117,41 @@ sys.path.insert(0, "ml")
 from prover import prove
 
 PUZZLE_ID = "0x0000000000000000000000000000000000000000000000000000000000000001"
-answer    = "your answer"   # replace with what you deduced from the clues
+answer    = "your confirmed answer"
 
 proof_bytes, public_inputs = prove(PUZZLE_ID, answer)
 print(f"Proof size: {len(proof_bytes)} bytes")
 print(f"Public inputs: {public_inputs}")
 ```
 
-This encodes your answer as a semantic embedding, runs it through a PCA projection, and generates a Halo2 ZK proof via EZKL. All pre-built artifacts are in `ml/artifacts/`. If the proof generation fails, try a semantically closer word or phrase.
+This encodes your answer as a semantic embedding, runs it through a PCA projection, and generates a Halo2 ZK proof via EZKL. All pre-built artifacts are in `ml/artifacts/`. If proof generation fails, try a semantically closer word or phrase.
+
+---
+
+### ✋ CHECKPOINT 3 — Report proof result, wait for confirmation
+
+**Stop here.** Report to the user:
+- Proof size in bytes
+- Public inputs list
+- Do NOT mint until the user says "continue".
 
 ---
 
 ## Step 3 — Mint
 
-> **STOP before running this step.**
-> Ask the user for the following values. Do not proceed until you have them:
-> - `PRIVATE_KEY` — the signer private key for the wallet that will mint
-> - `AGW_ADDRESS` — the Abstract Global Wallet address (only if using AGW; leave unset for plain EOA)
+### ✋ CHECKPOINT 4 — Ask for wallet credentials before minting
 
-The minter supports two modes. Use whichever matches your wallet setup.
+**Stop here.** Ask the user:
+1. Are you using **AGW (Abstract Global Wallet)** or a **plain EOA wallet**?
+2. Your **PRIVATE_KEY** (signer private key)
+3. If AGW: your **AGW_ADDRESS** (the smart wallet address)
 
-### Option A — Plain EOA wallet (standard private key)
+Do not proceed until you have these values.
 
-Set environment variable:
+---
+
+### Option A — Plain EOA wallet
+
 ```bash
 export PRIVATE_KEY=0xYOUR_PRIVATE_KEY
 ```
@@ -133,26 +164,26 @@ from minter import Minter
 minter  = Minter()
 tx_hash = minter.mint(
     "0x0000000000000000000000000000000000000000000000000000000000000001",
-    proof_bytes,    # from Step 2
-    public_inputs,  # from Step 2
+    proof_bytes,
+    public_inputs,
 )
 print(f"https://sepolia.abscan.org/tx/{tx_hash}")
 ```
 
-### Option B — Abstract Global Wallet (AGW signer private key)
+### Option B — Abstract Global Wallet (AGW)
 
-AGW uses a **signer private key** which is a standard EOA private key registered in your AGW smart contract. Transactions are sent *from* the AGW smart wallet address but *signed by* the signer private key using ZKsync type-113 EIP-712 format.
+AGW uses a signer private key (a standard EOA private key registered in your AGW smart contract). Transactions are sent *from* the AGW address but *signed by* the signer private key.
 
 ```bash
 pip install zksync2
-export PRIVATE_KEY=0xYOUR_SIGNER_PRIVATE_KEY    # the registered signer private key private key
-export AGW_ADDRESS=0xYOUR_AGW_WALLET     # your Abstract Global Wallet address
+export PRIVATE_KEY=0xYOUR_SIGNER_PRIVATE_KEY
+export AGW_ADDRESS=0xYOUR_AGW_WALLET_ADDRESS
 ```
 
 ```python
 import os, sys
 sys.path.insert(0, "agent")
-from minter import Minter   # auto-detects AGW mode when AGW_ADDRESS is set
+from minter import Minter
 
 minter  = Minter()
 tx_hash = minter.mint(
@@ -174,4 +205,4 @@ print(f"https://sepolia.abscan.org/tx/{tx_hash}")
 | Not enough gas | Get testnet ETH from `https://faucet.abs.xyz` |
 | Already claimed | Your wallet already minted this puzzle |
 | `ImportError: zksync2` | AGW mode needs: `pip install zksync2` |
-| AGW tx rejected | Session key may not be registered in your AGW contract — register it first via the AGW JS SDK |
+| AGW tx rejected | Signer private key may not be registered in your AGW contract |
